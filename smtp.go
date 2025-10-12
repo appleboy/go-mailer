@@ -1,10 +1,9 @@
 package mailer
 
 import (
-	"net/mail"
-	"net/smtp"
+	"time"
 
-	"github.com/scorredoira/email"
+	"github.com/xhit/go-simple-mail/v2"
 )
 
 type from struct {
@@ -65,18 +64,50 @@ func (c SMTP) Body(body string) Mail {
 
 // Send email
 func (c SMTP) Send() (interface{}, error) {
-	m := email.NewHTMLMessage(c.subject, c.body)
-	m.From = mail.Address{
-		Name:    c.from.Name,
-		Address: c.from.Address,
+	server := mail.NewSMTPClient()
+	server.Host = c.host
+	server.Port = 587 // default port
+	switch c.port {
+	case "25":
+		server.Port = 25
+	case "465":
+		server.Port = 465
+		server.Encryption = mail.EncryptionSSL
+	case "587":
+		server.Port = 587
+		server.Encryption = mail.EncryptionTLS
 	}
-	m.To = c.to
-	m.Cc = c.cc
+	server.Username = c.username
+	server.Password = c.password
+	server.Authentication = mail.AuthPlain
+	server.ConnectTimeout = 10 * time.Second
+	server.SendTimeout = 10 * time.Second
 
-	// send it
-	auth := smtp.PlainAuth("", c.username, c.password, c.host)
+	smtpClient, err := server.Connect()
+	if err != nil {
+		return nil, err
+	}
+	defer smtpClient.Close()
 
-	return nil, email.Send(c.host+":"+c.port, auth, m)
+	email := mail.NewMSG()
+	if c.from.Name != "" {
+		email.SetFrom(c.from.Name + " <" + c.from.Address + ">")
+	} else {
+		email.SetFrom(c.from.Address)
+	}
+	email.SetSubject(c.subject).
+		SetBody(mail.TextHTML, c.body)
+
+	for _, to := range c.to {
+		email.AddTo(to)
+	}
+
+	for _, cc := range c.cc {
+		email.AddCc(cc)
+	}
+
+	err = email.Send(smtpClient)
+	return nil, err
 }
 
 // SMTPEngine initial smtp object
