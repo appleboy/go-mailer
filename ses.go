@@ -1,12 +1,13 @@
 package mailer
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ses"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ses"
+	"github.com/aws/aws-sdk-go-v2/service/ses/types"
 	"github.com/rs/zerolog/log"
 )
 
@@ -17,10 +18,10 @@ const (
 
 // SES for aws ses
 type SES struct {
-	sess    *session.Session
+	cfg     aws.Config
 	source  *string
-	to      []*string
-	cc      []*string
+	to      []string
+	cc      []string
 	subject *string
 	body    *string
 }
@@ -35,7 +36,7 @@ func (c SES) From(name, address string) Mail {
 // To for mailto list
 func (c SES) To(address ...string) Mail {
 	for _, v := range address {
-		c.to = append(c.to, aws.String(v))
+		c.to = append(c.to, v)
 	}
 
 	return c
@@ -44,7 +45,7 @@ func (c SES) To(address ...string) Mail {
 // Cc for cc list
 func (c SES) Cc(address ...string) Mail {
 	for _, v := range address {
-		c.cc = append(c.cc, aws.String(v))
+		c.cc = append(c.cc, v)
 	}
 
 	return c
@@ -66,27 +67,27 @@ func (c SES) Body(body string) Mail {
 
 // Send email
 func (c SES) Send() (interface{}, error) {
-	// Create an SES session.
-	svc := ses.New(c.sess)
+	// Create an SES client.
+	svc := ses.NewFromConfig(c.cfg)
 
 	// Assemble the email.
 	input := &ses.SendEmailInput{
-		Destination: &ses.Destination{
+		Destination: &types.Destination{
 			CcAddresses: c.cc,
 			ToAddresses: c.to,
 		},
-		Message: &ses.Message{
-			Body: &ses.Body{
-				Html: &ses.Content{
+		Message: &types.Message{
+			Body: &types.Body{
+				Html: &types.Content{
 					Charset: aws.String(CharSet),
 					Data:    c.body,
 				},
-				Text: &ses.Content{
+				Text: &types.Content{
 					Charset: aws.String(CharSet),
 					Data:    c.body,
 				},
 			},
-			Subject: &ses.Content{
+			Subject: &types.Content{
 				Charset: aws.String(CharSet),
 				Data:    c.subject,
 			},
@@ -97,26 +98,10 @@ func (c SES) Send() (interface{}, error) {
 	}
 
 	// Attempt to send the email.
-	resp, err := svc.SendEmail(input)
+	resp, err := svc.SendEmail(context.TODO(), input)
 	// Display error messages if they occur.
 	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case ses.ErrCodeMessageRejected:
-				log.Error().Err(aerr).Msg(ses.ErrCodeMessageRejected)
-			case ses.ErrCodeMailFromDomainNotVerifiedException:
-				log.Error().Err(aerr).Msg(ses.ErrCodeMailFromDomainNotVerifiedException)
-			case ses.ErrCodeConfigurationSetDoesNotExistException:
-				log.Error().Err(aerr).Msg(ses.ErrCodeConfigurationSetDoesNotExistException)
-			default:
-				log.Error().Err(aerr).Msg("AWS SES Error")
-			}
-		} else {
-			// Print the error, cast err to awserr.Error to get the Code and
-			// Message from an error.
-			log.Error().Err(aerr).Msg("Unknown Error")
-		}
-
+		log.Error().Err(err).Msg("AWS SES Error")
 		return nil, err
 	}
 
@@ -125,17 +110,14 @@ func (c SES) Send() (interface{}, error) {
 
 // SESEngine initial ses
 func SESEngine(region string) (*SES, error) {
-	// Create a new session in the us-west-2 region.
-	// Replace us-west-2 with the AWS Region you're using for Amazon SES.
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(region),
-	},
-	)
+	// Create a new config in the specified region.
+	// Replace with the AWS Region you're using for Amazon SES.
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
 	if err != nil {
 		return nil, err
 	}
 
 	return &SES{
-		sess: sess,
+		cfg: cfg,
 	}, nil
 }
