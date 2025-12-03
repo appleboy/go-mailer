@@ -1,5 +1,6 @@
 # go-mailer
 
+[![Trivy](https://github.com/appleboy/go-mailer/actions/workflows/trivy.yml/badge.svg)](https://github.com/appleboy/go-mailer/actions/workflows/trivy.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/appleboy/go-mailer)](https://goreportcard.com/report/github.com/appleboy/go-mailer)
 [![GoDoc](https://godoc.org/github.com/appleboy/go-mailer?status.svg)](https://godoc.org/github.com/appleboy/go-mailer)
 
