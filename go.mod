@@ -3,7 +3,7 @@ module github.com/appleboy/go-mailer
 go 1.24.0
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.40.1
+	github.com/aws/aws-sdk-go-v2 v1.41.0
 	github.com/aws/aws-sdk-go-v2/config v1.32.3
 	github.com/aws/aws-sdk-go-v2/service/ses v1.34.15
 	github.com/rs/zerolog v1.34.0
