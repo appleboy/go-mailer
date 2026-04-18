@@ -1,31 +1,26 @@
 name: Trivy Security Scan
 
 on:
-  push:
-    branches:
-      - master
   pull_request:
     branches:
       - master
+  push:
+    branches:
+      - master
   schedule:
-    # Run every day at midnight UTC
-    - cron: "0 0 * * *"
-
-permissions:
-  actions: read
-  contents: read
-  security-events: write
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    - cron: "0 1 * * *" # Run daily at 1:00 AM UTC
 
 jobs:
   trivy-scan:
-    name: Trivy Security Scan
+    name: Trivy Vulnerability Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v6
 
       - name: Run Trivy vulnerability scanner in fs mode
@@ -36,17 +31,19 @@ jobs:
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH,MEDIUM"
+          exit-code: "0" # Don't fail on vulnerabilities, only record them
 
-      - name: Upload Trivy scan results to GitHub Security tab
+      - name: Upload Trivy results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: "trivy-results.sarif"
 
-      - name: Run Trivy vulnerability scanner (table output)
+      - name: Run Trivy vulnerability scanner in table format
         uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: "fs"
           scan-ref: "."
           format: "table"
-          severity: "CRITICAL,HIGH,MEDIUM"
+          severity: "CRITICAL,HIGH"
+          exit-code: "1" # Fail only if CRITICAL/HIGH vulnerabilities found
