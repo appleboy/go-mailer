@@ -2,7 +2,14 @@ package mailer
 
 import (
 	"errors"
+
 	"github.com/rs/zerolog/log"
+)
+
+// Supported email driver names.
+const (
+	DriverSMTP = "smtp"
+	DriverSES  = "ses"
 )
 
 // Mail defines the interface for email sending operations
@@ -12,7 +19,7 @@ type Mail interface {
 	Cc(...string) Mail
 	Subject(string) Mail
 	Body(string) Mail
-	Send() (interface{}, error)
+	Send() (any, error)
 }
 
 // Config holds the configuration for email drivers
@@ -37,7 +44,7 @@ func NewEngine(c Config) (Mail, error) {
 	var mail Mail
 	var err error
 	switch c.Driver {
-	case "smtp":
+	case DriverSMTP:
 		if c.Host == "" || c.Port == "" {
 			return nil, errors.New("SMTP host and port are required")
 		}
@@ -51,7 +58,7 @@ func NewEngine(c Config) (Mail, error) {
 			return nil, err
 		}
 		Client = mail
-	case "ses":
+	case DriverSES:
 		if c.Region == "" {
 			return nil, errors.New("SES region is required")
 		}

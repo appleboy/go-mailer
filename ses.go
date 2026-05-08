@@ -35,18 +35,14 @@ func (c SES) From(name, address string) Mail {
 
 // To for mailto list
 func (c SES) To(address ...string) Mail {
-	for _, v := range address {
-		c.to = append(c.to, v)
-	}
+	c.to = append(c.to, address...)
 
 	return c
 }
 
 // Cc for cc list
 func (c SES) Cc(address ...string) Mail {
-	for _, v := range address {
-		c.cc = append(c.cc, v)
-	}
+	c.cc = append(c.cc, address...)
 
 	return c
 }
@@ -66,7 +62,7 @@ func (c SES) Body(body string) Mail {
 }
 
 // Send email
-func (c SES) Send() (interface{}, error) {
+func (c SES) Send() (any, error) {
 	// Create an SES client.
 	svc := ses.NewFromConfig(c.cfg)
 

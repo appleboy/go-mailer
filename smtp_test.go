@@ -11,7 +11,7 @@ func TestSMTPEngine(t *testing.T) {
 	}
 
 	if smtp == nil {
-		t.Errorf("SMTPEngine() returned nil")
+		t.Fatal("SMTPEngine() returned nil")
 	}
 
 	if smtp.host != "smtp.gmail.com" {

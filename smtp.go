@@ -3,7 +3,7 @@ package mailer
 import (
 	"time"
 
-	"github.com/xhit/go-simple-mail/v2"
+	mail "github.com/xhit/go-simple-mail/v2"
 )
 
 type from struct {
@@ -63,7 +63,7 @@ func (c SMTP) Body(body string) Mail {
 }
 
 // Send email
-func (c SMTP) Send() (interface{}, error) {
+func (c SMTP) Send() (any, error) {
 	server := mail.NewSMTPClient()
 	server.Host = c.host
 	server.Port = 587 // default port
