@@ -130,7 +130,11 @@ func TestSESChaining(t *testing.T) {
 	// Verify all fields are set correctly
 	expectedSource := "John Doe <john@example.com>"
 	if sesResult.source == nil || *sesResult.source != expectedSource {
-		t.Errorf("Chained from source = %v, want %v", aws.ToString(sesResult.source), expectedSource)
+		t.Errorf(
+			"Chained from source = %v, want %v",
+			aws.ToString(sesResult.source),
+			expectedSource,
+		)
 	}
 
 	if len(sesResult.to) != 1 || sesResult.to[0] != "recipient@example.com" {
